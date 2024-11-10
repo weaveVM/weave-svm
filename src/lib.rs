@@ -58,8 +58,8 @@ pub mod log;
 pub mod processor;
 pub mod settler;
 pub mod transaction;
-pub mod wvm;
 pub mod utils;
+pub mod wvm;
 use {
     crate::{
         loader::PayTubeAccountLoader, settler::PayTubeSettler, transaction::PayTubeTransaction,

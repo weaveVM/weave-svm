@@ -74,9 +74,6 @@ use std::sync::Arc;
 //     assert_eq!(rpc_client.get_balance(&will_pubkey).unwrap(), 14_000_000);
 // }
 
-
-
-
 #[test]
 fn test_native_sol() {
     let alice = Keypair::new();
@@ -101,43 +98,44 @@ fn test_native_sol() {
 
     println!("{:?}", &rpc_client.url());
 
-    let paytube_channel = PayTubeChannel::new(
-        vec![payer, alice, bob, will], 
-        rpc_client
-    );
+    let paytube_channel = PayTubeChannel::new(vec![payer, alice, bob, will], rpc_client);
 
     // Create runtime after validator is started
     std::thread::spawn(move || {
         let rt = tokio::runtime::Runtime::new().unwrap();
         rt.block_on(async {
-            paytube_channel.process_paytube_transfers(&[
-                PayTubeTransaction {
-                    from: alice_pubkey,
-                    to: bob_pubkey,
-                    amount: 2_000_000,
-                    mint: None,
-                },
-                PayTubeTransaction {
-                    from: bob_pubkey,
-                    to: will_pubkey,
-                    amount: 5_000_000,
-                    mint: None,
-                },
-                PayTubeTransaction {
-                    from: alice_pubkey,
-                    to: bob_pubkey,
-                    amount: 2_000_000,
-                    mint: None,
-                },
-                PayTubeTransaction {
-                    from: will_pubkey,
-                    to: alice_pubkey,
-                    amount: 1_000_000,
-                    mint: None,
-                },
-            ]).await;
+            paytube_channel
+                .process_paytube_transfers(&[
+                    PayTubeTransaction {
+                        from: alice_pubkey,
+                        to: bob_pubkey,
+                        amount: 2_000_000,
+                        mint: None,
+                    },
+                    PayTubeTransaction {
+                        from: bob_pubkey,
+                        to: will_pubkey,
+                        amount: 5_000_000,
+                        mint: None,
+                    },
+                    PayTubeTransaction {
+                        from: alice_pubkey,
+                        to: bob_pubkey,
+                        amount: 2_000_000,
+                        mint: None,
+                    },
+                    PayTubeTransaction {
+                        from: will_pubkey,
+                        to: alice_pubkey,
+                        amount: 1_000_000,
+                        mint: None,
+                    },
+                ])
+                .await;
         });
-    }).join().unwrap();
+    })
+    .join()
+    .unwrap();
 
     // Verify balances after all operations complete
     let rpc_client = test_validator.get_rpc_client();

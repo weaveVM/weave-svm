@@ -11,14 +11,29 @@
 //! channel is about to close are needed to create the settlement transaction.
 
 use {
-    crate::transaction::{PayTubeTransaction, send_wvm_calldata}, borsh, borsh_derive::{BorshDeserialize, BorshSerialize}, solana_client::{rpc_client::RpcClient, rpc_config::RpcSendTransactionConfig}, solana_program_runtime::solana_rbpf::insn_builder::Instruction, solana_sdk::{
-        blake3::{hash, Hash}, commitment_config::CommitmentConfig, instruction::Instruction as SolanaInstruction, pubkey::Pubkey, signature::Keypair, signer::Signer, system_instruction, transaction::Transaction as SolanaTransaction
-    }, solana_svm::{
+    crate::transaction::{send_wvm_calldata, PayTubeTransaction},
+    crate::wvm::WvmData,
+    borsh,
+    borsh_derive::{BorshDeserialize, BorshSerialize},
+    futures,
+    solana_client::{rpc_client::RpcClient, rpc_config::RpcSendTransactionConfig},
+    solana_program_runtime::solana_rbpf::insn_builder::Instruction,
+    solana_sdk::{
+        blake3::{hash, Hash},
+        commitment_config::CommitmentConfig,
+        instruction::Instruction as SolanaInstruction,
+        pubkey::Pubkey,
+        signature::Keypair,
+        signer::Signer,
+        system_instruction,
+        transaction::Transaction as SolanaTransaction,
+    },
+    solana_svm::{
         transaction_processing_result::TransactionProcessingResultExtensions,
         transaction_processor::LoadAndExecuteSanitizedTransactionsOutput,
-    }, spl_associated_token_account::get_associated_token_address, std::collections::HashMap,
-    crate::wvm::WvmData,
-    futures
+    },
+    spl_associated_token_account::get_associated_token_address,
+    std::collections::HashMap,
 };
 
 /// The key used for storing ledger entries.
@@ -151,7 +166,7 @@ impl<'a> PayTubeSettler<'a> {
     /// Settle the payment channel results to the Solana blockchain.
     pub async fn process_settle(&self) -> Result<(), Box<dyn std::error::Error>> {
         let recent_blockhash: solana_sdk::hash::Hash = self.rpc_client.get_latest_blockhash()?;
-        
+
         // Process instructions in chunks sequentially
         for chunk in self.instructions.chunks(CHUNK_SIZE) {
             let transaction = SolanaTransaction::new_signed_with_payer(
@@ -160,15 +175,15 @@ impl<'a> PayTubeSettler<'a> {
                 self.keys,
                 recent_blockhash,
             );
-    
+
             let wvm_data = WvmData::from(chunk, self.keys[0].pubkey(), recent_blockhash);
             println!("{:#?}", wvm_data);
             let wvm_data = WvmData::serialize(wvm_data);
             println!("data length after borsh-brotli: {} bytes", wvm_data.len());
-            
+
             // Send WVM calldata and wait for response
             send_wvm_calldata(wvm_data).await?;
-    
+
             // Send and confirm transaction
             self.rpc_client
                 .send_and_confirm_transaction_with_spinner_and_config(
@@ -180,7 +195,7 @@ impl<'a> PayTubeSettler<'a> {
                     },
                 )?;
         }
-    
+
         Ok(())
     }
 }

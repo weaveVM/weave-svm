@@ -21,20 +21,20 @@ use {
 
 // WeaveVM imports
 
+use crate::utils::{get_env_var, WVM_DATA_SETTLER};
 use abi::Address;
 use ethers::types::H256;
 use ethers::utils::hex;
 use ethers::{prelude::*, utils};
 use ethers_providers::{Http, Provider};
 use std::str::FromStr;
-use crate::utils::{get_env_var, WVM_DATA_SETTLER};
 type Client = SignerMiddleware<Provider<Http>, Wallet<k256::ecdsa::SigningKey>>;
 
 /// A simple PayTube transaction. Transfers SPL tokens or SOL from one account
 /// to another.
 ///
 /// A `None` value for `mint` represents native SOL.
-/// 
+///
 #[derive(Debug)]
 pub struct PayTubeTransaction {
     pub mint: Option<Pubkey>,
@@ -121,12 +121,10 @@ pub async fn propagate_wvm_transaction(
 }
 
 pub async fn send_wvm_calldata(data: Vec<u8>) -> Result<String, Box<dyn std::error::Error>> {
-    let provider: Provider<Http> =
-    Provider::<Http>::try_from("https://testnet-rpc.wvm.dev").expect("could not instantiate HTTP Provider");
+    let provider: Provider<Http> = Provider::<Http>::try_from("https://testnet-rpc.wvm.dev")
+        .expect("could not instantiate HTTP Provider");
     let private_key = get_env_var("wvm_data_settler").unwrap();
-    let wallet: LocalWallet = private_key
-        .parse::<LocalWallet>()?
-        .with_chain_id(9496_u64);
+    let wallet: LocalWallet = private_key.parse::<LocalWallet>()?.with_chain_id(9496_u64);
     let client = SignerMiddleware::new(provider.clone(), wallet.clone());
 
     let address_from = WVM_DATA_SETTLER.parse::<Address>()?;

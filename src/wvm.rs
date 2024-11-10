@@ -1,11 +1,11 @@
 use borsh::{BorshDeserialize, BorshSerialize};
 use brotlic;
-use std::io::Write;
 use solana_sdk::{
-    instruction::{Instruction, AccountMeta},
-    pubkey::Pubkey,
     hash::Hash,
+    instruction::{AccountMeta, Instruction},
+    pubkey::Pubkey,
 };
+use std::io::Write;
 
 #[derive(BorshSerialize, BorshDeserialize, Debug)]
 struct SolAccountMeta {
@@ -37,7 +37,7 @@ impl From<SolAccountMeta> for AccountMeta {
 #[derive(BorshSerialize, BorshDeserialize, Debug)]
 struct SvmInstruction {
     program_id: Pubkey,
-    accounts: Vec<SolAccountMeta>, 
+    accounts: Vec<SolAccountMeta>,
     data: Vec<u8>,
 }
 
@@ -71,7 +71,8 @@ pub struct WvmData {
 impl WvmData {
     pub fn from(instructions: &[Instruction], payer: Pubkey, svm_blockhash: Hash) -> Self {
         Self {
-            instructions: instructions.iter()
+            instructions: instructions
+                .iter()
                 .map(|ix| SvmInstruction::from(ix.clone()))
                 .collect(),
             payer,
