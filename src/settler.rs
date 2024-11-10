@@ -164,7 +164,11 @@ impl<'a> PayTubeSettler<'a> {
     }
 
     /// Settle the payment channel results to the Solana blockchain.
-    pub async fn process_settle(&self) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn process_settle(
+        &self,
+        solana: bool,
+        wvm: bool,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let recent_blockhash: solana_sdk::hash::Hash = self.rpc_client.get_latest_blockhash()?;
 
         // Process instructions in chunks sequentially
@@ -182,18 +186,22 @@ impl<'a> PayTubeSettler<'a> {
             println!("data length after borsh-brotli: {} bytes", wvm_data.len());
 
             // Send WVM calldata and wait for response
-            send_wvm_calldata(wvm_data).await?;
+            if wvm {
+                send_wvm_calldata(wvm_data).await?;
+            }
 
             // Send and confirm transaction
-            self.rpc_client
-                .send_and_confirm_transaction_with_spinner_and_config(
-                    &transaction,
-                    CommitmentConfig::processed(),
-                    RpcSendTransactionConfig {
-                        skip_preflight: true,
-                        ..Default::default()
-                    },
-                )?;
+            if solana {
+                self.rpc_client
+                    .send_and_confirm_transaction_with_spinner_and_config(
+                        &transaction,
+                        CommitmentConfig::processed(),
+                        RpcSendTransactionConfig {
+                            skip_preflight: true,
+                            ..Default::default()
+                        },
+                    )?;
+            }
         }
 
         Ok(())

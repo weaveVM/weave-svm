@@ -194,10 +194,10 @@ impl PayTubeChannel {
         // The final ledger of debits and credits to each participant can then
         // be packaged into a minimal number of settlement transactions for
         // submission.
-        //println!("{:#?}, {:#?}, {:#?}", transactions, results.processing_results, &self.keys);
         let settler = PayTubeSettler::new(&self.rpc_client, transactions, results, &self.keys);
         log::settling_to_base_chain(settler.num_transactions());
-        let _ = settler.process_settle().await.unwrap();
+        // Settle to Solana & WeaveVM
+        let _ = settler.process_settle(true, true).await.unwrap();
 
         log::channel_closed();
     }
